@@ -1,9 +1,1 @@
-export type DiceStyle =
-  | "GALAXY"
-  | "GEMSTONE"
-  | "GLASS"
-  | "IRON"
-  | "NEBULA"
-  | "SUNRISE"
-  | "SUNSET"
-  | "WALNUT";
+export type DiceStyle = "SUNRISE" | "GEMSTONE";

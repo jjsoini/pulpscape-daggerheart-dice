@@ -54,6 +54,8 @@ export function getCombinedDiceValue(
       if (value !== undefined) {
         if (value === 0 && dieOrDice.type === "D10") {
           currentValues.push(10);
+        } else if (dieOrDice.role === "DISADVANTAGE") {
+          currentValues.push(-value);
         } else {
           currentValues.push(value);
         }

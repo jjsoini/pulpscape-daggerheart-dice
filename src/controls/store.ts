@@ -1,6 +1,11 @@
 import create from "zustand";
 import { immer } from "zustand/middleware/immer";
-import { diceSets } from "../sets/diceSets";
+import {
+  diceSets,
+  DUALITY_ID,
+  FEAR_STYLE,
+  HOPE_STYLE,
+} from "../sets/diceSets";
 import { Dice } from "../types/Dice";
 import { DiceSet } from "../types/DiceSet";
 import { Die } from "../types/Die";
@@ -14,11 +19,11 @@ interface DiceControlsState {
   diceById: Record<string, Die>;
   defaultDiceCounts: DiceCounts;
   diceCounts: DiceCounts;
-  diceBonus: number;
   diceAdvantage: Advantage;
+  /** Modifier added to the Duality Dice total */
+  diceBonus: number;
   diceHidden: boolean;
   diceRollPressTime: number | null;
-  fairnessTesterOpen: boolean;
   changeDiceSet: (diceSet: DiceSet) => void;
   resetDiceCounts: () => void;
   changeDieCount: (id: string, count: number) => void;
@@ -28,7 +33,6 @@ interface DiceControlsState {
   setDiceBonus: (bonus: number) => void;
   toggleDiceHidden: () => void;
   setDiceRollPressTime: (time: number | null) => void;
-  toggleFairnessTester: () => void;
 }
 
 const initialSet = diceSets[0];
@@ -41,11 +45,10 @@ export const useDiceControlsStore = create<DiceControlsState>()(
     diceById: initialDiceById,
     defaultDiceCounts: initialDiceCounts,
     diceCounts: initialDiceCounts,
-    diceBonus: 0,
     diceAdvantage: null,
+    diceBonus: 0,
     diceHidden: false,
     diceRollPressTime: null,
-    fairnessTesterOpen: false,
     changeDiceSet(diceSet) {
       set((state) => {
         const counts: DiceCounts = {};
@@ -82,7 +85,12 @@ export const useDiceControlsStore = create<DiceControlsState>()(
     incrementDieCount(id) {
       set((state) => {
         if (id in state.diceCounts) {
-          state.diceCounts[id] += 1;
+          if (id === DUALITY_ID) {
+            // Only one pair of Duality Dice per roll
+            state.diceCounts[id] = 1;
+          } else {
+            state.diceCounts[id] += 1;
+          }
         }
       });
     },
@@ -113,11 +121,6 @@ export const useDiceControlsStore = create<DiceControlsState>()(
         state.diceRollPressTime = time;
       });
     },
-    toggleFairnessTester() {
-      set((state) => {
-        state.fairnessTesterOpen = !state.fairnessTesterOpen;
-      });
-    },
   }))
 );
 
@@ -137,65 +140,53 @@ function getDiceByIdFromSet(diceSet: DiceSet) {
   return byId;
 }
 
-/** Generate new dice based off of a set of counts, advantage and die */
+/**
+ * Generate new dice based off of a set of counts and advantage.
+ * The Duality Dice become one group: a Hope d12, a Fear d12 and, with
+ * advantage or disadvantage, a d6 that is added or subtracted.
+ * Advantage and the modifier (`bonus`) only apply to the Duality Dice.
+ */
 export function getDiceToRoll(
   counts: DiceCounts,
   advantage: Advantage,
-  diceById: Record<string, Die>
+  diceById: Record<string, Die>,
+  bonus: number = 0
 ) {
   const dice: (Die | Dice)[] = [];
-  const countEntries = Object.entries(counts);
-  for (const [id, count] of countEntries) {
+  for (const [id, count] of Object.entries(counts)) {
     const die = diceById[id];
-    if (!die) {
+    if (!die || count < 1) {
       continue;
     }
+
+    if (id === DUALITY_ID) {
+      const duality: Die[] = [
+        { id: generateDiceId(), style: HOPE_STYLE, type: "D12", role: "HOPE" },
+        { id: generateDiceId(), style: FEAR_STYLE, type: "D12", role: "FEAR" },
+      ];
+      if (advantage === "ADVANTAGE") {
+        duality.push({
+          id: generateDiceId(),
+          style: HOPE_STYLE,
+          type: "D6",
+          role: "ADVANTAGE",
+        });
+      } else if (advantage === "DISADVANTAGE") {
+        duality.push({
+          id: generateDiceId(),
+          style: FEAR_STYLE,
+          type: "D6",
+          role: "DISADVANTAGE",
+        });
+      }
+      // Leave out a zero bonus so the breakdown doesn't show it
+      dice.push(bonus !== 0 ? { dice: duality, bonus } : { dice: duality });
+      continue;
+    }
+
     const { style, type } = die;
     for (let i = 0; i < count; i++) {
-      if (advantage === null) {
-        if (type === "D100") {
-          // Push a d100 and d10 when rolling a d100
-          dice.push({
-            dice: [
-              { id: generateDiceId(), style, type: "D100" },
-              { id: generateDiceId(), style, type: "D10" },
-            ],
-          });
-        } else {
-          dice.push({ id: generateDiceId(), style, type });
-        }
-      } else {
-        // Rolling with advantage or disadvantage
-        const combination = advantage === "ADVANTAGE" ? "HIGHEST" : "LOWEST";
-        if (type === "D100") {
-          // Push 2 d100s and d10s
-          dice.push({
-            dice: [
-              {
-                dice: [
-                  { id: generateDiceId(), style, type: "D100" },
-                  { id: generateDiceId(), style, type: "D10" },
-                ],
-              },
-              {
-                dice: [
-                  { id: generateDiceId(), style, type: "D100" },
-                  { id: generateDiceId(), style, type: "D10" },
-                ],
-              },
-            ],
-            combination,
-          });
-        } else {
-          dice.push({
-            dice: [
-              { id: generateDiceId(), style, type },
-              { id: generateDiceId(), style, type },
-            ],
-            combination,
-          });
-        }
-      }
+      dice.push({ id: generateDiceId(), style, type });
     }
   }
   return dice;

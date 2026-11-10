@@ -8,9 +8,11 @@ import Fade from "@mui/material/Fade";
 import { useTheme, keyframes } from "@mui/material/styles";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
-import Typography from "@mui/material/Typography";
 
 import CloseIcon from "@mui/icons-material/CloseRounded";
+import AddIcon from "@mui/icons-material/AddRounded";
+import RemoveIcon from "@mui/icons-material/RemoveRounded";
+import Typography from "@mui/material/Typography";
 import HiddenIcon from "@mui/icons-material/VisibilityOffRounded";
 import RollIcon from "@mui/icons-material/ArrowForwardRounded";
 
@@ -21,8 +23,8 @@ import { useDiceRollStore } from "../dice/store";
 import { DiceResults } from "./DiceResults";
 import { getDiceToRoll, useDiceControlsStore } from "./store";
 import { DiceType } from "../types/DiceType";
-import { useDiceHistoryStore } from "./history";
-import { Die } from "../types/Die";
+import { Advantage } from "./store";
+import { DUALITY_ID } from "../sets/diceSets";
 
 const jiggle = keyframes`
 0% { transform: translate(0, 0) rotate(0deg); }
@@ -38,17 +40,14 @@ export function DiceRollControls() {
   );
 
   const counts = useDiceControlsStore((state) => state.diceCounts);
-  const bonus = useDiceControlsStore((state) => state.diceBonus);
-  const advantage = useDiceControlsStore((state) => state.diceAdvantage);
-  // Is currently the default dice state (all counts 0 and advantage/bonus defaults)
+  // Is currently the default dice state (all counts 0).
+  // Advantage only applies to the Duality Dice so it doesn't count here.
   const isDefault = useMemo(
     () =>
       Object.entries(defaultDiceCounts).every(
         ([type, count]) => counts[type as DiceType] === count
-      ) &&
-      advantage === null &&
-      bonus === 0,
-    [counts, defaultDiceCounts, advantage, bonus]
+      ),
+    [counts, defaultDiceCounts]
   );
 
   const rollValues = useDiceRollStore((state) => state.rollValues);
@@ -91,32 +90,21 @@ function DicePickedControls() {
   const diceById = useDiceControlsStore((state) => state.diceById);
   const counts = useDiceControlsStore((state) => state.diceCounts);
   const hidden = useDiceControlsStore((state) => state.diceHidden);
+  const advantage = useDiceControlsStore((state) => state.diceAdvantage);
   const bonus = useDiceControlsStore((state) => state.diceBonus);
   const setBonus = useDiceControlsStore((state) => state.setDiceBonus);
-  const advantage = useDiceControlsStore((state) => state.diceAdvantage);
   const setAdvantage = useDiceControlsStore((state) => state.setDiceAdvantage);
 
   const resetDiceCounts = useDiceControlsStore(
     (state) => state.resetDiceCounts
   );
 
-  const pushRecentRoll = useDiceHistoryStore((state) => state.pushRecentRoll);
-
   function handleRoll() {
     if (hasDice && rollPressTime) {
-      const dice = getDiceToRoll(counts, advantage, diceById);
+      const dice = getDiceToRoll(counts, advantage, diceById, bonus);
       const activeTimeSeconds = (performance.now() - rollPressTime) / 1000;
       const speedMultiplier = Math.max(1, Math.min(10, activeTimeSeconds * 2));
-      startRoll({ dice, bonus, hidden }, speedMultiplier);
-
-      const rolledDiceById: Record<string, Die> = {};
-      for (const id of Object.keys(counts)) {
-        if (!(id in rolledDiceById)) {
-          rolledDiceById[id] = diceById[id];
-        }
-      }
-      pushRecentRoll({ advantage, counts, bonus, diceById: rolledDiceById });
-
+      startRoll({ dice, hidden }, speedMultiplier);
       handleReset();
     }
     setRollPressTime(null);
@@ -124,8 +112,8 @@ function DicePickedControls() {
 
   function handleReset() {
     resetDiceCounts();
-    setBonus(0);
     setAdvantage(null);
+    setBonus(0);
   }
 
   const rollPressTime = useDiceControlsStore(
@@ -158,6 +146,12 @@ function DicePickedControls() {
       ),
     [counts, defaultDiceCounts]
   );
+
+  const hasDuality = (counts[DUALITY_ID] || 0) > 0;
+
+  function toggleAdvantage(value: Advantage) {
+    setAdvantage(advantage === value ? null : value);
+  }
 
   const theme = useTheme();
 
@@ -255,7 +249,7 @@ function DicePickedControls() {
       >
         <Tooltip title="Clear" disableInteractive>
           <IconButton
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
               e.stopPropagation();
               handleReset();
             }}
@@ -264,44 +258,120 @@ function DicePickedControls() {
           </IconButton>
         </Tooltip>
       </Stack>
-      <Stack
-        sx={{
-          position: "absolute",
-          top: 12,
-          left: 24,
-        }}
-      >
-        {advantage && (
-          <Typography
-            textAlign="left"
-            lineHeight="40px"
-            color="white"
-            variant="h6"
+      {hasDuality && (
+        // Either side of the Roll button. A sibling of the roll ButtonBase,
+        // so clicking these doesn't roll. The gap in the middle passes
+        // pointer events through to the Roll button.
+        <Stack
+          direction="row"
+          alignItems="center"
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            pointerEvents: "none",
+          }}
+        >
+          <ModifierButton
+            tooltip="Modifier −1"
+            onClick={() => setBonus(bonus - 1)}
           >
-            {advantage === "ADVANTAGE" ? "Adv" : "Dis"}
-          </Typography>
-        )}
-      </Stack>
-      <Stack
-        sx={{
-          position: "absolute",
-          top: 12,
-          right: 24,
-        }}
-      >
-        {bonus !== 0 && (
-          <Typography
-            textAlign="right"
-            variant="h6"
-            lineHeight="40px"
-            color="white"
+            <RemoveIcon />
+          </ModifierButton>
+          <AdvantageButton
+            label="DIS"
+            tooltip="Disadvantage: subtract a d6"
+            active={advantage === "DISADVANTAGE"}
+            onClick={() => toggleAdvantage("DISADVANTAGE")}
+          />
+          {/* Room for the Roll button when it widens on hover */}
+          <Box component="div" sx={{ width: "108px" }} />
+          <AdvantageButton
+            label="ADV"
+            tooltip="Advantage: add a d6"
+            active={advantage === "ADVANTAGE"}
+            onClick={() => toggleAdvantage("ADVANTAGE")}
+          />
+          <ModifierButton
+            tooltip="Modifier +1"
+            onClick={() => setBonus(bonus + 1)}
           >
-            {bonus > 0 && "+"}
-            {bonus}
-          </Typography>
-        )}
-      </Stack>
+            <AddIcon />
+          </ModifierButton>
+        </Stack>
+      )}
+      {hasDuality && bonus !== 0 && (
+        // The current modifier, under the Roll button
+        <Typography
+          variant="h6"
+          color="white"
+          sx={{
+            position: "absolute",
+            top: "calc(50% + 24px)",
+            left: "50%",
+            transform: "translateX(-50%)",
+            pointerEvents: "none",
+          }}
+        >
+          {bonus > 0 ? `+${bonus}` : `−${-bonus}`}
+        </Typography>
+      )}
     </>
+  );
+}
+
+function ModifierButton({
+  tooltip,
+  onClick,
+  children,
+}: {
+  tooltip: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Tooltip title={tooltip} disableInteractive>
+      <IconButton
+        size="small"
+        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+          e.stopPropagation();
+          onClick();
+        }}
+        sx={{ color: "white", pointerEvents: "all" }}
+      >
+        {children}
+      </IconButton>
+    </Tooltip>
+  );
+}
+
+function AdvantageButton({
+  label,
+  tooltip,
+  active,
+  onClick,
+}: {
+  label: string;
+  tooltip: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Tooltip title={tooltip} disableInteractive>
+      <Button
+        size="small"
+        variant={active ? "contained" : "text"}
+        color={active ? "primary" : "inherit"}
+        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+          e.stopPropagation();
+          onClick();
+        }}
+        sx={{ borderRadius: "20px", minWidth: "48px", pointerEvents: "all" }}
+      >
+        {label}
+      </Button>
+    </Tooltip>
   );
 }
 
@@ -325,7 +395,6 @@ function FinishedRollControls() {
 
   return (
     <>
-      <GradientOverlay top height={resultsExpanded ? 500 : undefined} />
       <Box
         sx={{
           position: "absolute",
@@ -364,7 +433,7 @@ function FinishedRollControls() {
       <Stack
         sx={{
           position: "absolute",
-          top: 0,
+          bottom: 0,
           left: "50%",
           transform: "translateX(-50%)",
           pointerEvents: "none",

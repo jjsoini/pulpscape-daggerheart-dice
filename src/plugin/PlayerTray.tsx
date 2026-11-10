@@ -18,7 +18,6 @@ import Tooltip from "@mui/material/Tooltip";
 import HiddenIcon from "@mui/icons-material/VisibilityOffRounded";
 
 import environment from "../environment.hdr";
-import { GradientOverlay } from "../controls/GradientOverlay";
 import { DiceResults } from "../controls/DiceResults";
 import { usePlayerDice } from "./usePlayerDice";
 import { PlayerDiceRoll } from "./PlayerDiceRoll";
@@ -111,18 +110,16 @@ function PlayerTrayResults({ player }: { player?: Player }) {
       {finalValue !== null && (
         <>
           <Fade in>
-            <GradientOverlay top height={resultsExpanded ? 500 : undefined} />
-          </Fade>
-          <GradientOverlay />
-          <Fade in>
             <Box
               sx={{
                 position: "absolute",
-                top: 0,
+                bottom: 0,
                 left: 0,
                 width: "100%",
                 pointerEvents: "none",
                 padding: 3,
+                // Sit above the player's name
+                paddingBottom: "64px",
               }}
               component="div"
             >
