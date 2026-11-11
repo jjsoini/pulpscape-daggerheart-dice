@@ -434,8 +434,10 @@ function FinishedRollControls() {
         sx={{
           position: "absolute",
           bottom: 0,
-          left: "50%",
-          transform: "translateX(-50%)",
+          // Full width: nothing else sits in the bottom corners, and a
+          // centred left: 50% box would wrap the result to half the tray
+          left: 0,
+          right: 0,
           pointerEvents: "none",
           padding: 3,
           alignItems: "center",

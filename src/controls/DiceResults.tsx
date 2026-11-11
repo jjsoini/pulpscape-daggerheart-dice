@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
@@ -9,7 +9,7 @@ import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 
 import { getCombinedDiceValue } from "../helpers/getCombinedDiceValue";
-import { getDieFromDice } from "../helpers/getDieFromDice";
+import { useResultDelay } from "../helpers/useResultDelay";
 import {
   DualityResult,
   getDualityResult,
@@ -38,22 +38,8 @@ export function DiceResults({
     return getDualityResult(diceRoll, rollValues);
   }, [diceRoll, rollValues]);
 
-  // Hold the result back for a moment so players read the dice first.
-  // Keyed on the dice ids (new on every roll and reroll) because synced
-  // rolls from other players arrive as new objects on every OBR update.
-  const rollKey = useMemo(
-    () =>
-      getDieFromDice(diceRoll)
-        .map((die) => die.id)
-        .join(","),
-    [diceRoll]
-  );
-  const [shown, setShown] = useState(false);
-  useEffect(() => {
-    setShown(false);
-    const timeout = setTimeout(() => setShown(true), RESULT_DELAY);
-    return () => clearTimeout(timeout);
-  }, [rollKey]);
+  // Only rendered once the dice have settled
+  const shown = useResultDelay(diceRoll, true);
 
   // The result sits at the bottom of the tray in a faint colour: the dice
   // themselves are the main read, the total is just there to help.
@@ -86,7 +72,12 @@ export function DiceResults({
             }}
             onClick={() => onExpand(!expanded)}
           >
-            <Stack direction="row" alignItems="baseline" gap={1}>
+            <Stack
+            direction="row"
+            alignItems="baseline"
+            gap={1}
+            whiteSpace="nowrap"
+          >
               <Typography variant="h5" color="inherit">
                 {finalValue}
               </Typography>
@@ -108,8 +99,6 @@ export function DiceResults({
 }
 
 const RESULT_COLOR = "rgba(255, 255, 255, 0.6)";
-/** Milliseconds between the dice settling and the result appearing */
-const RESULT_DELAY = 1000;
 
 const dualityLabels: Record<DualityResult, string> = {
   HOPE: "WITH HOPE",

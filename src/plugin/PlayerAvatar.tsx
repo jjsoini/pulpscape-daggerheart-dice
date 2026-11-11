@@ -8,6 +8,7 @@ import Avatar from "@mui/material/Avatar";
 import { useTheme } from "@mui/material/styles";
 
 import { usePlayerDice } from "./usePlayerDice";
+import { useResultDelay } from "../helpers/useResultDelay";
 
 export function PlayerAvatar({
   player,
@@ -16,14 +17,15 @@ export function PlayerAvatar({
   player: Player;
   onSelect: () => void;
 }) {
-  const { finalValue, finishedRolling } = usePlayerDice(player);
+  const { diceRoll, finalValue, finishedRolling } = usePlayerDice(player);
+  const resultShown = useResultDelay(diceRoll, finishedRolling);
 
   const theme = useTheme();
 
   return (
     <Stack alignItems="center" my={0.5}>
       <Badge
-        badgeContent={finishedRolling ? finalValue : null}
+        badgeContent={resultShown ? finalValue : null}
         showZero
         overlap="circular"
         anchorOrigin={{

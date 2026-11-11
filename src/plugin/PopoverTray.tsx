@@ -12,6 +12,7 @@ import ButtonBase from "@mui/material/ButtonBase";
 
 import environment from "../environment.hdr";
 import { usePlayerDice } from "./usePlayerDice";
+import { useResultDelay } from "../helpers/useResultDelay";
 import { PlayerDiceRoll } from "./PlayerDiceRoll";
 import { AudioListenerProvider } from "../audio/AudioListenerProvider";
 import { Tray } from "../tray/Tray";
@@ -29,6 +30,7 @@ export function PopoverTray({
 }) {
   const { diceRoll, finalValue, finishedRolling, finishedRollTransforms } =
     usePlayerDice(player);
+  const resultShown = useResultDelay(diceRoll, finishedRolling);
 
   const theme = useTheme();
 
@@ -111,7 +113,7 @@ export function PopoverTray({
               noWrap
             >
               {player?.name}
-              {finishedRolling && <span> | {finalValue}</span>}
+              {resultShown && <span> | {finalValue}</span>}
             </Typography>
           </Paper>
         </ButtonBase>
