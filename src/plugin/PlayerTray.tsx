@@ -25,11 +25,20 @@ import { AudioListenerProvider } from "../audio/AudioListenerProvider";
 import { Tray } from "../tray/Tray";
 import { useDebugStore } from "../debug/store";
 import { TraySuspense } from "../tray/TraySuspense";
+import { TrayCoverCamera } from "../tray/TrayCamera";
+import {
+  CORNER_INSET,
+  NARROW_TRAY_HEIGHT,
+  NARROW_TRAY_WIDTH,
+} from "../helpers/narrowTray";
 
 export function PlayerTray({
   player,
+  narrow = false,
 }: {
   player?: Player; // Make player optional to allow for preloading of the tray
+  /** Phone layout: as big as fits, with the back button in its top left */
+  narrow?: boolean;
 }) {
   const allowOrbit = useDebugStore((state) => state.allowOrbit);
 
@@ -38,8 +47,8 @@ export function PlayerTray({
       <Box
         component="div"
         borderRadius={0.5}
-        height="100vh"
-        width="calc(100vh / 2)"
+        height={narrow ? NARROW_TRAY_HEIGHT : "100vh"}
+        width={narrow ? NARROW_TRAY_WIDTH : "calc(100vh / 2)"}
         overflow="hidden"
         position="relative"
       >
@@ -58,18 +67,22 @@ export function PlayerTray({
               />
               <Tray />
               <PlayerDiceRoll player={player} />
-              <PerspectiveCamera
-                makeDefault
-                fov={28}
-                position={[0, 4.3, 0]}
-                rotation={[-Math.PI / 2, 0, 0]}
-              />
+              {narrow ? (
+                <TrayCoverCamera />
+              ) : (
+                <PerspectiveCamera
+                  makeDefault
+                  fov={28}
+                  position={[0, 4.3, 0]}
+                  rotation={[-Math.PI / 2, 0, 0]}
+                />
+              )}
               {allowOrbit && <OrbitControls />}
             </AudioListenerProvider>
           </Canvas>
         </TraySuspense>
       </Box>
-      <PlayerTrayResults player={player} />
+      <PlayerTrayResults player={player} narrow={narrow} />
       <Box
         sx={{
           position: "absolute",
@@ -77,7 +90,7 @@ export function PlayerTray({
           left: 0,
           width: "100%",
           pointerEvents: "none",
-          padding: 3,
+          padding: narrow ? `${CORNER_INSET}px` : 3,
         }}
         component="div"
       >
@@ -93,7 +106,13 @@ export function PlayerTray({
   );
 }
 
-function PlayerTrayResults({ player }: { player?: Player }) {
+function PlayerTrayResults({
+  player,
+  narrow,
+}: {
+  player?: Player;
+  narrow: boolean;
+}) {
   const { diceRoll, finalValue, finishedRollValues, finishedRolling } =
     usePlayerDice(player);
 
@@ -117,9 +136,9 @@ function PlayerTrayResults({ player }: { player?: Player }) {
                 left: 0,
                 width: "100%",
                 pointerEvents: "none",
-                padding: 3,
+                padding: narrow ? `${CORNER_INSET}px` : 3,
                 // Sit above the player's name
-                paddingBottom: "64px",
+                paddingBottom: narrow ? "48px" : "64px",
               }}
               component="div"
             >

@@ -30,17 +30,43 @@ function localManifest(): Plugin {
   };
 }
 
+/**
+ * Vite serves its prebundled dependencies as cacheable forever. Their version
+ * tags can survive a rebuild, so a browser can mix cached files from an older
+ * build with new ones and end up with two copies of a library (two physics
+ * engines, only one of them started). Make the browser revalidate instead.
+ */
+function noForeverCache(): Plugin {
+  return {
+    name: "no-forever-cache",
+    configureServer(server) {
+      server.middlewares.use((_req, res, next) => {
+        const setHeader = res.setHeader.bind(res);
+        res.setHeader = ((name: string, value: string | number | string[]) =>
+          setHeader(
+            name,
+            name.toLowerCase() === "cache-control" ? "no-cache" : value
+          )) as typeof res.setHeader;
+        next();
+      });
+    },
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {
     // 7510 is Tales of the Old West dice, so both can run at once
     port: 7511,
     strictPort: true,
+    // Allow an HTTPS tunnel (`cloudflared tunnel --url http://localhost:7511`)
+    // for testing in OBR on a phone
+    allowedHosts: [".trycloudflare.com"],
     headers: {
       "Access-Control-Allow-Origin": "*",
     },
   },
-  plugins: [react(), localManifest()],
+  plugins: [react(), localManifest(), noForeverCache()],
   assetsInclude: ["**/*.glb", "**/*.hdr"],
   build: {
     rollupOptions: {

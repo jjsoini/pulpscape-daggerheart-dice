@@ -19,14 +19,48 @@ import { Tray } from "../tray/Tray";
 import { TraySuspense } from "../tray/TraySuspense";
 import { AnimatedPlayerCamera } from "./AnimatedPlayerCamera";
 
+/** Size of the roll card, in pixels */
+export type PopoverTraySize = { width: number; trayHeight: number };
+
+/** The card in the corner of a wider screen */
+export const COMPACT_SIZE: PopoverTraySize = { width: 250, trayHeight: 250 };
+/** Space around the card */
+export const MARGIN = 16;
+/** Height of the name and result under the tray */
+export const NAME_HEIGHT = 32;
+/** Screens narrower than this get the wide card */
+const NARROW_VIEWPORT = 600;
+
+/**
+ * On a phone the card floats over the map nearly full width, as a 3:4
+ * portrait view that suits the tall tray, but never taller than two thirds
+ * of the screen so some of the map still shows
+ */
+export function getPopoverTraySize(
+  viewportWidth: number,
+  viewportHeight: number
+): PopoverTraySize {
+  if (viewportWidth >= NARROW_VIEWPORT) {
+    return COMPACT_SIZE;
+  }
+  const width = Math.round(viewportWidth - 2 * MARGIN);
+  const maxTrayHeight = (viewportHeight * 2) / 3 - NAME_HEIGHT - MARGIN;
+  return {
+    width,
+    trayHeight: Math.round(Math.min((width * 4) / 3, maxTrayHeight)),
+  };
+}
+
 export function PopoverTray({
   player,
   onToggle,
   onOpen,
+  size,
 }: {
   player: Player;
   onToggle: (connectionId: string, show: boolean) => void;
   onOpen: (connectionId: string) => void;
+  size: PopoverTraySize;
 }) {
   const { diceRoll, finalValue, finishedRolling, finishedRollTransforms } =
     usePlayerDice(player);
@@ -66,7 +100,7 @@ export function PopoverTray({
   }
 
   return (
-    <Box component="div" position="absolute" right={16} bottom={16}>
+    <Box component="div" position="absolute" right={MARGIN} bottom={MARGIN}>
       <Slide
         in={shown}
         onExited={() => onToggle(player.connectionId, false)}
@@ -76,8 +110,8 @@ export function PopoverTray({
           <Paper
             elevation={8}
             sx={{
-              width: "250px",
-              height: "282px",
+              width: `${size.width}px`,
+              height: `${size.trayHeight + NAME_HEIGHT}px`,
               borderRadius: 2,
               overflow: "hidden",
               backgroundColor:
@@ -86,7 +120,11 @@ export function PopoverTray({
                   : "rgba(255, 255, 255, 0.4)",
             }}
           >
-            <Box component="div" height="250px" width="250px">
+            <Box
+              component="div"
+              height={`${size.trayHeight}px`}
+              width={`${size.width}px`}
+            >
               <TraySuspense>
                 <Canvas frameloop="demand">
                   <AudioListenerProvider volume={0.25}>
@@ -106,7 +144,7 @@ export function PopoverTray({
               variant="subtitle1"
               color="text.secondary"
               textAlign="center"
-              lineHeight="32px"
+              lineHeight={`${NAME_HEIGHT}px`}
               sx={{
                 bgcolor: "background.default",
               }}

@@ -95,3 +95,32 @@ export function DiceSetPicker() {
     </>
   );
 }
+
+/**
+ * Switches between the Hope and Fear dice sets in one tap, showing the
+ * current set (the phone dice panel)
+ */
+export function DiceSetToggle() {
+  const diceSet = useDiceControlsStore((state) => state.diceSet);
+  const changeDiceSet = useDiceControlsStore((state) => state.changeDiceSet);
+  const index = diceSets.findIndex((set) => set.id === diceSet.id);
+  const next = diceSets[(index + 1) % diceSets.length];
+
+  return (
+    <Tooltip
+      title={`${diceSet.name}, tap for ${next.name.toLowerCase()}`}
+      disableInteractive
+    >
+      <IconButton
+        aria-label={`Switch to ${next.name.toLowerCase()}`}
+        onClick={() => changeDiceSet(next)}
+        sx={{
+          padding: "4px",
+          backgroundColor: "rgba(255, 255, 255, 0.16) !important",
+        }}
+      >
+        <PreviewImage src={diceSet.previewImage} />
+      </IconButton>
+    </Tooltip>
+  );
+}

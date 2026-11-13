@@ -19,6 +19,8 @@ const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 
 const DRAG_HEIGHT = 0.5;
+/** Dragged dice follow the pointer at this height, whatever the camera zoom */
+const dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -DRAG_HEIGHT);
 const DRAG_HISTORY_WINDOW_SIZE = 5;
 
 type DragState = { p: { x: number; z: number }; t: number };
@@ -48,11 +50,13 @@ export function InteractiveDice(
         pointer.x = (x / size.width) * 2 - 1;
         pointer.y = -((y / size.height) * 2 - 1);
         raycaster.setFromCamera(pointer, camera);
-        const position = raycaster.ray.origin.add(
-          raycaster.ray.direction.multiplyScalar(
-            camera.position.y - DRAG_HEIGHT
-          )
+        const position = raycaster.ray.intersectPlane(
+          dragPlane,
+          new THREE.Vector3()
         );
+        if (!position) {
+          return;
+        }
         // Offset the drag anchor so that the x and y animate to the
         // pointer position
         setDragAnchor({
@@ -121,11 +125,13 @@ export function InteractiveDice(
           pointer.x = (x / size.width) * 2 - 1;
           pointer.y = -((y / size.height) * 2 - 1);
           raycaster.setFromCamera(pointer, camera);
-          const position = raycaster.ray.origin.add(
-            raycaster.ray.direction.multiplyScalar(
-              camera.position.y - DRAG_HEIGHT
-            )
+          const position = raycaster.ray.intersectPlane(
+            dragPlane,
+            new THREE.Vector3()
           );
+          if (!position) {
+            return;
+          }
 
           // Offset initial anchor position
           const newDiceX = position.x - dragAnchor.x;
