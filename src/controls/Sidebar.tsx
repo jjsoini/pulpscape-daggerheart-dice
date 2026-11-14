@@ -5,6 +5,7 @@ import Divider from "@mui/material/Divider";
 import { DiceSetPicker } from "./DiceSetPicker";
 import { DicePicker } from "./DicePicker";
 import { DiceHidden } from "./DiceHidden";
+import { DiceHistory } from "./DiceHistory";
 
 import { PluginGate } from "../plugin/PluginGate";
 import { DiceRollSync } from "../plugin/DiceRollSync";
@@ -27,6 +28,7 @@ export function Sidebar() {
         <DicePicker />
         <Divider flexItem sx={{ mx: 1 }} />
         <DiceHidden />
+        <DiceHistory />
         <PluginGate>
           <Divider flexItem sx={{ mx: 1 }} />
           <DiceRollSync />
