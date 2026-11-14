@@ -126,7 +126,7 @@ function getModifier(dice: Dice): number {
 const dualityLabels: Record<DualityResult, string> = {
   HOPE: "WITH HOPE",
   FEAR: "WITH FEAR",
-  CRITICAL: "CRITICAL SUCCESS",
+  CRITICAL: "CRIT SUCCESS",
 };
 
 /** The operator shown before a die in the breakdown */
