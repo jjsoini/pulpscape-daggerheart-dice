@@ -144,7 +144,8 @@ function getDiceByIdFromSet(diceSet: DiceSet) {
  * Generate new dice based off of a set of counts and advantage.
  * The Duality Dice become one group: a Hope d12, a Fear d12 and, with
  * advantage or disadvantage, a d6 that is added or subtracted.
- * Advantage and the modifier (`bonus`) only apply to the Duality Dice.
+ * Advantage only applies to the Duality Dice, and so does `bonus` here:
+ * `rollDicePool` puts the modifier for other dice on the whole roll.
  */
 export function getDiceToRoll(
   counts: DiceCounts,

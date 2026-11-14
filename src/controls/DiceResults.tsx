@@ -41,6 +41,8 @@ export function DiceResults({
   // Only rendered once the dice have settled
   const shown = useResultDelay(diceRoll, true);
 
+  const modifier = useMemo(() => getModifier(diceRoll), [diceRoll]);
+
   // The result sits at the bottom of the tray in a faint colour: the dice
   // themselves are the main read, the total is just there to help.
   // The breakdown opens upwards from it.
@@ -57,6 +59,19 @@ export function DiceResults({
             <DiceResultsExpanded diceRoll={diceRoll} rollValues={rollValues} />
           </Stack>
         </Grow>
+        {/* The modifier the total includes, small above it. The breakdown
+            shows it on its own line instead. */}
+        {modifier !== 0 && !expanded && (
+          <Typography
+            // As the breakdown's text
+            variant="body1"
+            color={RESULT_COLOR}
+            lineHeight={1.25}
+            aria-label="Modifier"
+          >
+            {modifier > 0 ? `+${modifier}` : `−${-modifier}`}
+          </Typography>
+        )}
         <Tooltip
           title={expanded ? "Hide Breakdown" : "Show Breakdown"}
           disableInteractive
@@ -99,6 +114,14 @@ export function DiceResults({
 }
 
 const RESULT_COLOR = "rgba(255, 255, 255, 0.6)";
+
+/** All the modifiers in a roll: on the roll itself or on its groups */
+function getModifier(dice: Dice): number {
+  return dice.dice.reduce(
+    (sum, dieOrDice) => (isDice(dieOrDice) ? sum + getModifier(dieOrDice) : sum),
+    dice.bonus || 0
+  );
+}
 
 const dualityLabels: Record<DualityResult, string> = {
   HOPE: "WITH HOPE",
@@ -154,6 +177,7 @@ function DiceResultsExpanded({
     [diceRoll, rollValues]
   );
   const dice = useMemo(() => diceRoll.dice.filter(isDice), [diceRoll]);
+  const bonus = diceRoll.bonus || 0;
 
   return (
     <Stack divider={<Divider />} gap={1}>
@@ -171,6 +195,12 @@ function DiceResultsExpanded({
             )}
           </Stack>
         ))}
+        {/* The modifier ends the line, before the total that includes it */}
+        {die.length > 0 && bonus !== 0 && (
+          <Typography lineHeight="28px" color="white">
+            {bonus > 0 ? `+ ${bonus}` : `− ${-bonus}`}
+          </Typography>
+        )}
         {die.length > 0 && (
           <>
             <Typography lineHeight="28px" color="white">
@@ -178,7 +208,7 @@ function DiceResultsExpanded({
             </Typography>
             <Typography lineHeight="28px" color="white">
               {getCombinedDiceValue(
-                { dice: die, combination: diceRoll.combination },
+                { dice: die, combination: diceRoll.combination, bonus },
                 rollValues
               )}
             </Typography>
@@ -188,10 +218,10 @@ function DiceResultsExpanded({
       {dice.map((d, i) => (
         <DiceResultsExpanded key={i} diceRoll={d} rollValues={rollValues} />
       ))}
-      {diceRoll.bonus && (
+      {/* A modifier without dice of its own on this level */}
+      {die.length === 0 && bonus !== 0 && (
         <Typography textAlign="center" lineHeight="28px" color="white">
-          {diceRoll.bonus > 0 && "+"}
-          {diceRoll.bonus}
+          {bonus > 0 ? `+${bonus}` : `−${-bonus}`}
         </Typography>
       )}
     </Stack>

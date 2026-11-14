@@ -16,7 +16,7 @@ import RollIcon from "@mui/icons-material/ArrowForwardRounded";
 import { RerollDiceIcon } from "../icons/RerollDiceIcon";
 
 import { GradientOverlay } from "./GradientOverlay";
-import { DualityControls } from "./DualityControls";
+import { ModifierControls } from "./ModifierControls";
 import { useDiceRollStore } from "../dice/store";
 import { DiceResults } from "./DiceResults";
 import { useDiceControlsStore } from "./store";
@@ -226,7 +226,7 @@ function DicePickedControls() {
           </IconButton>
         </Tooltip>
       </Stack>
-      {hasDuality && (
+      {hasDice && (
         // Under the Roll button. A sibling of the roll ButtonBase, so
         // clicking these doesn't roll.
         <Box
@@ -238,7 +238,7 @@ function DicePickedControls() {
             transform: "translateX(-50%)",
           }}
         >
-          <DualityControls overTray />
+          <ModifierControls overTray withAdvantage={hasDuality} />
         </Box>
       )}
     </>

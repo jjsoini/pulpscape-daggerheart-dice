@@ -10,15 +10,18 @@ import RemoveIcon from "@mui/icons-material/RemoveRounded";
 import { Advantage, useDiceControlsStore } from "./store";
 
 /**
- * "− DIS ADV +" for the Duality Dice: the modifier buttons on the outer ends
- * and the advantage toggles inside. The modifier shows between DIS and ADV
- * once it isn't 0, in a space kept for it.
+ * The modifier's "−" and "+" buttons, for any roll. For the Duality Dice
+ * the advantage toggles go between them: "− DIS ADV +". The modifier shows
+ * in the middle once it isn't 0, in a space kept for it.
  */
-export function DualityControls({
+export function ModifierControls({
   overTray = false,
+  withAdvantage = false,
 }: {
   /** White over the tray, else in the theme's colours (the phone panel) */
   overTray?: boolean;
+  /** Show DIS and ADV (the Duality Dice are picked) */
+  withAdvantage?: boolean;
 }) {
   const advantage = useDiceControlsStore((state) => state.diceAdvantage);
   const setAdvantage = useDiceControlsStore((state) => state.setDiceAdvantage);
@@ -42,13 +45,15 @@ export function DualityControls({
       >
         <RemoveIcon />
       </ModifierButton>
-      <AdvantageButton
-        label="DIS"
-        tooltip="Disadvantage: subtract a d6"
-        active={advantage === "DISADVANTAGE"}
-        size={size}
-        onClick={() => toggleAdvantage("DISADVANTAGE")}
-      />
+      {withAdvantage && (
+        <AdvantageButton
+          label="DIS"
+          tooltip="Disadvantage: subtract a d6"
+          active={advantage === "DISADVANTAGE"}
+          size={size}
+          onClick={() => toggleAdvantage("DISADVANTAGE")}
+        />
+      )}
       {/* Always takes its space, so the buttons don't move when the
           modifier appears */}
       <Typography
@@ -62,13 +67,15 @@ export function DualityControls({
       >
         {bonus > 0 ? `+${bonus}` : bonus < 0 ? `−${-bonus}` : "0"}
       </Typography>
-      <AdvantageButton
-        label="ADV"
-        tooltip="Advantage: add a d6"
-        active={advantage === "ADVANTAGE"}
-        size={size}
-        onClick={() => toggleAdvantage("ADVANTAGE")}
-      />
+      {withAdvantage && (
+        <AdvantageButton
+          label="ADV"
+          tooltip="Advantage: add a d6"
+          active={advantage === "ADVANTAGE"}
+          size={size}
+          onClick={() => toggleAdvantage("ADVANTAGE")}
+        />
+      )}
       <ModifierButton
         tooltip="Modifier +1"
         color={color}

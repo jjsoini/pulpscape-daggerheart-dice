@@ -17,7 +17,7 @@ import HiddenOffIcon from "@mui/icons-material/VisibilityRounded";
 import { DicePicker } from "./DicePicker";
 import { DiceSetToggle } from "./DiceSetPicker";
 import { useDiceControlsStore } from "./store";
-import { DualityControls } from "./DualityControls";
+import { ModifierControls } from "./ModifierControls";
 import { useDiceRollStore } from "../dice/store";
 import { getThrowSpeed, resetDicePool, rollDicePool } from "./rollDicePool";
 import { PluginGate } from "../plugin/PluginGate";
@@ -126,7 +126,7 @@ export function DicePanel({
           </Box>
         </Fade>
         <DicePicker variant="panel" />
-        {hasDuality && <DualityControls />}
+        {hasPool && <ModifierControls withAdvantage={hasDuality} />}
         <Box component="div" flexGrow={1} />
         {/* Other players in a strip above the roll buttons, scrolling
             sideways when they don't fit (centred when they do) */}

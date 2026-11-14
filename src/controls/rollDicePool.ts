@@ -1,5 +1,6 @@
 import { useDiceRollStore } from "../dice/store";
 import { getDiceToRoll, useDiceControlsStore } from "./store";
+import { DUALITY_ID } from "../sets/diceSets";
 
 /** Clear the picked dice, advantage and modifier */
 export function resetDicePool() {
@@ -22,7 +23,13 @@ export function rollDicePool(speedMultiplier?: number) {
     diceBonus: bonus,
   } = useDiceControlsStore.getState();
   const dice = getDiceToRoll(counts, advantage, diceById, bonus);
-  useDiceRollStore.getState().startRoll({ dice, hidden }, speedMultiplier);
+  // The Duality Dice group carries the modifier itself, other dice get it on
+  // the whole roll (left out when it's 0, so the breakdown doesn't show it)
+  const hasDuality = (counts[DUALITY_ID] || 0) > 0;
+  const rollBonus = !hasDuality && bonus !== 0 ? { bonus } : {};
+  useDiceRollStore
+    .getState()
+    .startRoll({ dice, hidden, ...rollBonus }, speedMultiplier);
   resetDicePool();
 }
 
