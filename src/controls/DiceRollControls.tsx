@@ -20,7 +20,12 @@ import { ModifierControls } from "./ModifierControls";
 import { useDiceRollStore } from "../dice/store";
 import { DiceResults } from "./DiceResults";
 import { useDiceControlsStore } from "./store";
-import { getThrowSpeed, resetDicePool, rollDicePool } from "./rollDicePool";
+import {
+  getThrowSpeed,
+  rerollAll,
+  resetDicePool,
+  rollDicePool,
+} from "./rollDicePool";
 import { useNarrowLayout } from "../helpers/useNarrowLayout";
 import { useTrayInset } from "../helpers/narrowTray";
 import { DiceType } from "../types/DiceType";
@@ -248,7 +253,6 @@ function DicePickedControls() {
 function FinishedRollControls() {
   const roll = useDiceRollStore((state) => state.roll);
   const clearRoll = useDiceRollStore((state) => state.clearRoll);
-  const reroll = useDiceRollStore((state) => state.reroll);
 
   const rollValues = useDiceRollStore((state) => state.rollValues);
   const finishedRollValues = useMemo(() => {
@@ -280,7 +284,7 @@ function FinishedRollControls() {
       >
         <Tooltip title="Reroll" disableInteractive>
           <IconButton
-            onClick={() => reroll()}
+            onClick={() => rerollAll()}
             aria-label="Reroll"
             sx={{ color: "white" }}
           >

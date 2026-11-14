@@ -16,10 +16,16 @@ import HiddenOffIcon from "@mui/icons-material/VisibilityRounded";
 
 import { DicePicker } from "./DicePicker";
 import { DiceSetToggle } from "./DiceSetPicker";
+import { DiceHistory } from "./DiceHistory";
 import { useDiceControlsStore } from "./store";
 import { ModifierControls } from "./ModifierControls";
 import { useDiceRollStore } from "../dice/store";
-import { getThrowSpeed, resetDicePool, rollDicePool } from "./rollDicePool";
+import {
+  getThrowSpeed,
+  rerollAll,
+  resetDicePool,
+  rollDicePool,
+} from "./rollDicePool";
 import { PluginGate } from "../plugin/PluginGate";
 import { PartyTrays } from "../plugin/PartyTrays";
 import { DiceResults } from "./DiceResults";
@@ -97,8 +103,8 @@ export function DicePanel({
         }}
       >
         {/* Lined up with the tray's corner buttons: the panel toggle (see
-            DicePanelToggle) then the dice set in the top left, Clear top
-            right */}
+            DicePanelToggle), the dice set and history in the top left,
+            Clear top right */}
         <Box
           component="div"
           sx={{
@@ -108,6 +114,16 @@ export function DicePanel({
           }}
         >
           <DiceSetToggle />
+        </Box>
+        <Box
+          component="div"
+          sx={{
+            position: "absolute",
+            top: trayTop(),
+            left: traySide(cornerRowOffset(2)),
+          }}
+        >
+          <DiceHistory placement="bottom" />
         </Box>
         {/* Clears the tray, like the tray's own Clear, or else the pool */}
         <Fade in={hasRoll || hasPool}>
@@ -256,7 +272,6 @@ export function DicePanelToggle({
 function RollResultRow({ onReroll }: { onReroll: () => void }) {
   const roll = useDiceRollStore((state) => state.roll);
   const rollValues = useDiceRollStore((state) => state.rollValues);
-  const reroll = useDiceRollStore((state) => state.reroll);
   const [expanded, setExpanded] = useState(false);
 
   const finishedValues = useMemo(() => {
@@ -285,7 +300,7 @@ function RollResultRow({ onReroll }: { onReroll: () => void }) {
             <IconButton
               aria-label="Reroll"
               onClick={() => {
-                reroll();
+                rerollAll();
                 onReroll();
               }}
             >

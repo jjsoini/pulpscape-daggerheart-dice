@@ -37,14 +37,14 @@ export function App() {
  */
 function NarrowLayout() {
   // Opened with its toggle, and closed when dice are rolled so you can
-  // watch them
-  const hasRoll = useDiceRollStore((state) => Boolean(state.roll));
+  // watch them (also a roll from the history over one in the tray)
+  const roll = useDiceRollStore((state) => state.roll);
   const [panelOpen, setPanelOpen] = useState(false);
   useEffect(() => {
-    if (hasRoll) {
+    if (roll) {
       setPanelOpen(false);
     }
-  }, [hasRoll]);
+  }, [roll]);
 
   return (
     <Box
